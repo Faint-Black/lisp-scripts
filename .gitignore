@@ -1,3 +1,4 @@
+# Lisp compiled bytecode files
 *.FASL
 *.fasl
 *.lisp-temp
@@ -15,3 +16,6 @@
 *.sx32fsl
 *.wx64fsl
 *.wx32fsl
+
+# other stuf
+*.html

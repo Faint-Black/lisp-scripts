@@ -6,3 +6,10 @@ The following setup may be required for you to run any of the scripts:
 * **Repl:** SLIME
 * **Implementation:** sbcl
 * **Package manager:** quicklisp
+
+## Running
+Most of these have their functionality defined entirely within one main function which has no parameters, all you have to do is run it:
+```
+REPL> (main)
+```
+And you should get the desired output.
