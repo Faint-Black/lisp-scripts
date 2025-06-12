@@ -1,7 +1,7 @@
 ;;-----------------------------------------------------------------------------
 ;;  This script automatically scrapes and organizes the 65816 opcodes into
 ;; digestible and sortable pieces of data, then outputs the ordered results
-;; into a text file.
+;; into a LaTeX formatted file.
 ;;-----------------------------------------------------------------------------
 
 ;; http request library
@@ -21,6 +21,19 @@
   (emulation "ERROR" :type string)
   (syntax "ERROR" :type string))
 
+(defun latex-verbatim(STR)
+  (concatenate 'string "\\texttt{" STR "}"))
+(defun latex-boldface(STR)
+  (concatenate 'string "\\textbf{" STR "}"))
+
+(defun write-string-to-file(FILENAME STR)
+  "Puts a string into a file"
+  (with-open-file (stream FILENAME
+                          :direction :output
+                          :if-exists :supersede
+                          :if-does-not-exist :create)
+    (write-string STR stream)))
+
 (defun get-resource(URL)
   "Returns an HTTP request in string form"
   (multiple-value-bind (http-body http-status) (dex:get URL)
@@ -30,12 +43,7 @@
 
 (defun download-resource(URL FILENAME)
   "If the file does not already exists, get and download it"
-  (if (not (probe-file FILENAME))
-      (with-open-file (stream FILENAME
-                              :direction :output
-                              :if-exists :supersede
-                              :if-does-not-exist :create)
-        (write-string (get-resource URL) stream))))
+  (if (not (probe-file FILENAME)) (write-string-to-file FILENAME (get-resource URL))))
 
 (defun process-syntax-string-list(STRINGLIST)
   "Inserts spaces between the syntax words"
@@ -78,18 +86,37 @@
 
 (defun opcode-as-string(OP)
   "Format an opcode struct into a string"
-  (format nil "0x~a | ~3a | ~12a | ~a~%"
-          (opcode-code OP)
+  (format nil "  ~a & ~3a & ~11a & ~a & ~26a \\\\~%"
+          (latex-verbatim (concatenate 'string "0x" (opcode-code OP)))
           (opcode-length OP)
           (opcode-cycles OP)
-          (opcode-syntax OP)))
+          (latex-verbatim
+           (cl-ppcre:regex-replace-all
+            "m"
+            (cl-ppcre:regex-replace-all "x" (opcode-flags OP) "*")
+            "*"))
+          (latex-verbatim
+           (cl-ppcre:regex-replace-all
+            "#"
+            (cl-ppcre:regex-replace-all "\\$" (opcode-syntax OP) "\\\$")
+            "\\#"))))
 
-(defun opcodes-as-string(OPCODES)
-  "Formats all the structs into a single string"
-  (apply #'concatenate 'string
-         (mapcar #'opcode-as-string OPCODES)))
+(defun opcodes-as-latex-table(OPCODES)
+  "Formats all the structs into a single LaTeX formatted table string"
+  (concatenate 'string
+               "\\begin{longtable}{|l|l|l|l|l|}" (string #\Newline)
+               "  \\hline" (string #\Newline)
+               "  \\rowcolor{lightgray}" (string #\Newline)
+               "  Code & Length & Cycles & nvmxdizc & Syntax \\\\" (string #\Newline)
+               "  \\hline" (string #\Newline)
+               (apply #'concatenate 'string (mapcar #'opcode-as-string OPCODES))
+               "  \\hline" (string #\Newline)
+               "\\end{longtable}"))
 
 ;; Creates a text file with all opcodes in varying orders
 (defun main()
   (download-resource "http://www.6502.org/tutorials/65c816opcodes.html" "65c816opcodes.html")
-  (opcodes-as-string (parse-opcode-strings (get-opcode-strings "65c816opcodes.html"))))
+  (write-string-to-file "sorted_by_opcodes.txt"
+                        (opcodes-as-latex-table
+                         (parse-opcode-strings
+                          (get-opcode-strings "65c816opcodes.html")))))
