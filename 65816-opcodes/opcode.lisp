@@ -1,5 +1,5 @@
 ;;-----------------------------------------------------------------------------
-;;  Module which defines the opcode struct and its parsing options.
+;;  Module which defines the Lisp opcode struct and its parsing options.
 ;;-----------------------------------------------------------------------------
 
 (defstruct opcode

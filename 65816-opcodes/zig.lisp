@@ -1,5 +1,5 @@
 ;;-----------------------------------------------------------------------------
-;;  Module which defines the [lisp opcode]->[zig opcode] format.
+;;  Module which defines the [lisp opcode]=>[zig opcode] conversion.
 ;;-----------------------------------------------------------------------------
 
 (defun indent-level(N)

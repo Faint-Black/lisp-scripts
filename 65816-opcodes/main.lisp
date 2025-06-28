@@ -11,11 +11,10 @@
 ;; system utilities library
 (ql:quickload :uiop)
 
-(load "./http.lisp")
-(load "./opcode.lisp")
-(load "./zig.lisp")
+(load "./http.lisp")   ; [HTTP file] => [raw string]
+(load "./opcode.lisp") ; [raw string] => [(Lisp) opcode structs]
+(load "./zig.lisp")    ; [(Lisp) opcode structs] => [(Zig) opcode structs]
 
-;; Creates a text file with all opcodes in varying orders
 (defun main()
   (download-resource "http://www.6502.org/tutorials/65c816opcodes.html" "65c816opcodes.html")
   (write-string-to-file "instructions.txt"
