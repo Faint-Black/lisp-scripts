@@ -58,13 +58,15 @@
 
 (defun get-suggested-compression-format(VIDEO)
   "Generates a new video struct with the suggested compression parameters"
-  (let ((downscale (resolution-downscale (video-width VIDEO)))
-        (lowest-bitrate (if (< (video-bitrate VIDEO) (from-si-unit-string "128K")) (video-bitrate VIDEO) (from-si-unit-string "128K")))
-        (lowest-fps (if (< (video-framerate VIDEO) 24) (video-framerate VIDEO) 24)))
+  (let* ((downscale (resolution-downscale (video-width VIDEO)))
+         (lowest-bitrate (if (< (video-bitrate VIDEO) (from-si-unit-string "128K")) (video-bitrate VIDEO) (from-si-unit-string "128K")))
+         (lowest-fps (if (< (video-framerate VIDEO) 24) (video-framerate VIDEO) 24))
+         (new-width (values (floor (/ (video-width VIDEO) downscale))))
+         (new-height (values (floor (/ (video-height VIDEO) downscale)))))
     (make-video
      :name "compressed.mp4"
-     :width (values (floor (/ (video-width VIDEO) downscale)))
-     :height (values (floor (/ (video-height VIDEO) downscale)))
+     :width (if (= (mod new-width 2) 1) (+ new-width 1) new-width)
+     :height (if (= (mod new-height 2) 1) (+ new-height 1) new-height)
      :bitrate lowest-bitrate
      :framerate lowest-fps)))
 
@@ -79,8 +81,8 @@
           (to-si-unit-string (video-bitrate NEWVIDEO))
           (video-name NEWVIDEO)))
 
-(defun print-video-struct(VIDEO)
-  (format t "filepath: ~a, resolution: ~ax~a, fps: ~a, bitrate: ~a~a"
+(defun video-as-string(VIDEO)
+  (format nil "filepath: ~a, resolution: ~ax~a, fps: ~a, bitrate: ~a~a"
           (video-name VIDEO)
           (video-width VIDEO) (video-height VIDEO)
           (video-framerate VIDEO)
@@ -88,4 +90,16 @@
           (string #\Newline)))
 
 (defun main(FILENAME)
-  (print-video-struct (get-video-metadata FILENAME)))
+  (let*
+      ((input-video (get-video-metadata FILENAME))
+       (output-video (get-suggested-compression-format input-video))
+       (compression-cmd (compression-script input-video output-video)))
+    (format t "Input file:~a~a" (string #\Newline) (video-as-string input-video))
+    (format t "Output file:~a~a" (string #\Newline) (video-as-string output-video))
+    (format t "Running command: ~a~a" compression-cmd (string #\Newline))
+    (uiop:run-program compression-cmd)
+    (format t "All done.~a" (string #\Newline))
+    (format t "Input filesize = ~a~a"
+            (capture-stdout (concatenate 'string "du -h " (video-name input-video))) (string #\Newline))
+    (format t "Output filesize = ~a~a"
+            (capture-stdout (concatenate 'string "du -h " (video-name output-video))) (string #\Newline))))
