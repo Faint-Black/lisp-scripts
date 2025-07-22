@@ -93,13 +93,19 @@
   (let*
       ((input-video (get-video-metadata FILENAME))
        (output-video (get-suggested-compression-format input-video))
-       (compression-cmd (compression-script input-video output-video)))
-    (format t "Input file:~a~a" (string #\Newline) (video-as-string input-video))
-    (format t "Output file:~a~a" (string #\Newline) (video-as-string output-video))
-    (format t "Running command: ~a~a" compression-cmd (string #\Newline))
+       (compression-cmd (compression-script input-video output-video))
+       (bold (concatenate 'string (string #\Escape) "[1m"))
+       (green (concatenate 'string (string #\Escape) "[1;32m"))
+       (reset (concatenate 'string (string #\Escape) "[0m")))
+    (format t "~aInput file:~a~%~a" bold reset
+            (video-as-string input-video))
+    (format t "~aOutput file:~a~%~a" bold reset
+            (video-as-string output-video))
+    (format t "~aRunning command:~a~%~a~%" bold reset
+            compression-cmd)
     (uiop:run-program compression-cmd)
-    (format t "All done.~a" (string #\Newline))
-    (format t "Input filesize = ~a~a"
-            (capture-stdout (concatenate 'string "du -h " (video-name input-video))) (string #\Newline))
-    (format t "Output filesize = ~a~a"
-            (capture-stdout (concatenate 'string "du -h " (video-name output-video))) (string #\Newline))))
+    (format t "~aAll done.~a~%" green reset)
+    (format t "~aInput filesize~a = ~a~%" bold reset
+            (capture-stdout (concatenate 'string "du -h " (video-name input-video))))
+    (format t "~aOutput filesize~a = ~a~%" bold reset
+            (capture-stdout (concatenate 'string "du -h " (video-name output-video))))))
