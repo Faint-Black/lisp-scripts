@@ -89,7 +89,14 @@
           (to-si-unit-string (video-bitrate VIDEO))
           (string #\Newline)))
 
+(defun input-video-file-exists(FILENAME)
+  (uiop:file-exists-p (concatenate 'string (namestring (uiop/os:getcwd)) FILENAME)))
+
 (defun main(FILENAME)
+  (if (not (input-video-file-exists FILENAME))
+      (progn
+        (format t "File does not exist!~%")
+        (quit)))
   (let*
       ((input-video (get-video-metadata FILENAME))
        (output-video (get-suggested-compression-format input-video))
